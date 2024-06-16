@@ -55,16 +55,13 @@ router.put('/blog', auth, async (req: Request, res: Response) => {
 router.get('/blog/bulk', async (req: Request, res: Response) => {
     const filter = (req.query.filter)?.toString() || "";
     try {
-        const blogs: Blog[] = await prisma.$queryRaw`
-        SELECT * FROM "Blog" 
-        where "title" ILIKE ${'%' + filter + '%'}
-        or "content" ILIKE ${'%' + filter + '%'}
-        or EXISTS(
-            SELECT 1 FROM 'User'
-            WHERE "User"."id" = "Blog"."authodId"
-            AND "User"."name" ILIKE {'%' + filter + '%'}
-        )
-        `
+        const blogs: Blog[] = await prisma.blog.findMany({
+            where: {
+                OR: [{
+                    author: filter
+                }]
+            }
+        })
         return res.status(200).json({
             data: blogs.map(blog => ({
                 id: blog.id,
